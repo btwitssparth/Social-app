@@ -85,100 +85,142 @@ export default function Register() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Create Account</h1>
-        <p style={styles.subtitle}>Join our community today</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo/Brand */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg">
+            <span className="text-3xl">🚀</span>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Join SocialApp</h1>
+          <p className="text-gray-600">Create your account and connect with friends</p>
+        </div>
 
-        {error && <div style={styles.error}>{error}</div>}
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 backdrop-blur-sm border border-gray-100">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Profile Picture</label>
-            {preview ? (
-              <div style={styles.previewContainer}>
-                <img src={preview} alt="Preview" style={styles.previewImage} />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setForm({ ...form, profilePic: null });
-                    setPreview(null);
-                  }}
-                  style={styles.removeBtn}
-                >
-                  Change Photo
-                </button>
-              </div>
-            ) : (
-              <label style={styles.uploadLabel}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  style={styles.fileInput}
-                  disabled={loading}
-                />
-                <div style={styles.uploadPlaceholder}>
-                  <span style={styles.uploadIcon}>📷</span>
-                  <p>Click to upload profile picture</p>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Profile Picture Upload */}
+            <div className="flex flex-col items-center">
+              {preview ? (
+                <div className="relative">
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="w-24 h-24 rounded-full object-cover border-4 border-blue-100 shadow-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm({ ...form, profilePic: null });
+                      setPreview(null);
+                    }}
+                    className="absolute -bottom-2 -right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition shadow-lg"
+                    disabled={loading}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
+              ) : (
+                <label className="cursor-pointer group">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    disabled={loading}
+                  />
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center border-2 border-dashed border-blue-300 group-hover:border-blue-500 transition">
+                    <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-gray-500 text-center mt-2">Upload Photo</p>
+                </label>
+              )}
+            </div>
+
+            {/* Username */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Username
               </label>
-            )}
-          </div>
+              <input
+                type="text"
+                placeholder="johndoe"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition outline-none"
+                disabled={loading}
+              />
+            </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Username</label>
-            <input
-              placeholder="Choose a username"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              style={styles.input}
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                placeholder="john@example.com"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition outline-none"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition outline-none"
+                disabled={loading}
+              />
+              <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
               disabled={loading}
-            />
-          </div>
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Creating account...
+                </span>
+              ) : (
+                "Create Account"
+              )}
+            </button>
+          </form>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Email</label>
-            <input
-              placeholder="Enter your email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              style={styles.input}
-              disabled={loading}
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Password</label>
-            <input
-              placeholder="Create a password (min 6 characters)"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              style={styles.input}
-              disabled={loading}
-            />
-          </div>
-
-          <button
-            type="submit"
-            style={{
-              ...styles.button,
-              ...(loading ? styles.buttonDisabled : {}),
-            }}
-            disabled={loading}
-          >
-            {loading ? "Creating account..." : "Register"}
-          </button>
-        </form>
-
-        <p style={styles.footer}>
-          Already have an account?{" "}
-          <Link to="/login" style={styles.link}>
-            Login here
-          </Link>
-        </p>
+          {/* Footer */}
+          <p className="text-center text-sm text-gray-600 mt-6">
+            Already have an account?{" "}
+            <Link to="/login" className="text-blue-600 font-semibold hover:text-blue-700">
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

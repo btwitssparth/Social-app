@@ -37,41 +37,29 @@ export default function Home() {
   const handleLike = async (postId) => {
     try {
       const res = await api.post(`/post/like/${postId}`);
-      // Update the post in state with new likes
-      setPosts(posts.map(p => 
-        p._id === postId ? res.data.data : p
-      ));
+      setPosts(posts.map((p) => (p._id === postId ? res.data.data : p)));
     } catch (err) {
       console.error("Failed to like post:", err);
-      alert("Failed to like post");
     }
   };
 
   const handleComment = async (postId) => {
     const text = commentText[postId];
-    if (!text || !text.trim()) {
-      alert("Please enter a comment");
-      return;
-    }
+    if (!text || !text.trim()) return;
 
     try {
       const res = await api.post(`/post/comment/${postId}`, { text });
-      // Update the post with new comment
-      setPosts(posts.map(p => 
-        p._id === postId ? res.data.data : p
-      ));
-      // Clear comment input
+      setPosts(posts.map((p) => (p._id === postId ? res.data.data : p)));
       setCommentText({ ...commentText, [postId]: "" });
     } catch (err) {
       console.error("Failed to add comment:", err);
-      alert("Failed to add comment");
     }
   };
 
   const toggleComments = (postId) => {
     setShowComments({
       ...showComments,
-      [postId]: !showComments[postId]
+      [postId]: !showComments[postId],
     });
   };
 
@@ -84,137 +72,204 @@ export default function Home() {
     }
   };
 
-  const handleCreatePost = () => {
-    navigate("/create-post");
-  };
-
   if (loading) {
     return (
-      <div style={styles.container}>
-        <p>Loading posts...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={styles.container}>
-        <p style={styles.error}>{error}</p>
-        <button onClick={fetchPosts}>Retry</button>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your feed...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <div style={styles.headerContent}>
-          <h1>Social Feed</h1>
-          <div style={styles.userInfo}>
-            <span>Welcome, {user?.username}!</span>
-            <button onClick={handleCreatePost} style={styles.createBtn}>
-              Create Post
-            </button>
-            <button onClick={handleLogout} style={styles.logoutBtn}>
-              Logout
-            </button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-xl">🚀</span>
+              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                SocialApp
+              </h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
+                <img
+                  src={user?.profilePic}
+                  alt={user?.username}
+                  className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
+                />
+                <span className="font-medium">{user?.username}</span>
+              </div>
+              <button
+                onClick={() => navigate("/create-post")}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition shadow-md hover:shadow-lg"
+              >
+                + Create
+              </button>
+              <button
+                onClick={handleLogout}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main style={styles.main}>
+      {/* Main Content */}
+      <main className="max-w-2xl mx-auto px-4 py-8">
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            {error}
+            <button onClick={fetchPosts} className="ml-4 underline">
+              Retry
+            </button>
+          </div>
+        )}
+
         {posts.length === 0 ? (
-          <div style={styles.noPosts}>
-            <p>No posts yet. Be the first to create one!</p>
-            <button onClick={handleCreatePost}>Create Post</button>
+          <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-4xl">📝</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No posts yet</h2>
+            <p className="text-gray-600 mb-6">Be the first to share something!</p>
+            <button
+              onClick={() => navigate("/create-post")}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition shadow-md"
+            >
+              Create Your First Post
+            </button>
           </div>
         ) : (
-          <div style={styles.postsContainer}>
+          <div className="space-y-6">
             {posts.map((post) => (
-              <article key={post._id} style={styles.post}>
-                <div style={styles.postHeader}>
-                  <div style={styles.authorInfo}>
-                    {post.user?.profilePic && (
-                      <img
-                        src={post.user.profilePic}
-                        alt={post.user.username}
-                        style={styles.avatar}
-                      />
-                    )}
-                    <strong>{post.user?.username || "Unknown User"}</strong>
+              <article key={post._id} className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition">
+                {/* Post Header */}
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <img
+                      src={post.user?.profilePic}
+                      alt={post.user?.username}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {post.user?.username || "Unknown User"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(post.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
                   </div>
-                  <span style={styles.timestamp}>
-                    {new Date(post.createdAt).toLocaleDateString()}
-                  </span>
                 </div>
 
+                {/* Post Image */}
                 {post.image && (
                   <img
                     src={post.image}
                     alt="Post content"
-                    style={styles.postImage}
+                    className="w-full max-h-[600px] object-cover"
                   />
                 )}
 
+                {/* Post Caption */}
                 {post.caption && (
-                  <p style={styles.caption}>{post.caption}</p>
+                  <div className="px-4 pt-3">
+                    <p className="text-gray-800">{post.caption}</p>
+                  </div>
                 )}
 
-                <div style={styles.postActions}>
+                {/* Post Actions */}
+                <div className="px-4 py-3 flex items-center space-x-4 border-t border-gray-100 mt-3">
                   <button
                     onClick={() => handleLike(post._id)}
-                    style={{
-                      ...styles.actionBtn,
-                      ...(post.likes?.includes(user?._id) ? styles.liked : {})
-                    }}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
+                      post.likes?.includes(user?._id)
+                        ? "text-red-500 bg-red-50"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
                   >
-                    ❤️ {post.likes?.length || 0} {post.likes?.length === 1 ? 'Like' : 'Likes'}
+                    <svg className="w-5 h-5" fill={post.likes?.includes(user?._id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span className="font-semibold text-sm">
+                      {post.likes?.length || 0}
+                    </span>
                   </button>
+
                   <button
                     onClick={() => toggleComments(post._id)}
-                    style={styles.actionBtn}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
                   >
-                    💬 {post.comments?.length || 0} {post.comments?.length === 1 ? 'Comment' : 'Comments'}
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span className="font-semibold text-sm">
+                      {post.comments?.length || 0}
+                    </span>
                   </button>
                 </div>
 
                 {/* Comments Section */}
                 {showComments[post._id] && (
-                  <div style={styles.commentsSection}>
-                    <div style={styles.commentsList}>
+                  <div className="px-4 pb-4 border-t border-gray-100">
+                    <div className="mt-4 space-y-3 max-h-64 overflow-y-auto">
                       {post.comments && post.comments.length > 0 ? (
                         post.comments.map((comment) => (
-                          <div key={comment._id} style={styles.comment}>
-                            <div style={styles.commentHeader}>
-                              {comment.user?.profilePic && (
-                                <img
-                                  src={comment.user.profilePic}
-                                  alt={comment.user.username}
-                                  style={styles.commentAvatar}
-                                />
-                              )}
-                              <strong>{comment.user?.username || "Unknown"}</strong>
+                          <div key={comment._id} className="flex space-x-3">
+                            <img
+                              src={comment.user?.profilePic}
+                              alt={comment.user?.username}
+                              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                            />
+                            <div className="flex-1 bg-gray-50 rounded-lg p-3">
+                              <p className="font-semibold text-sm text-gray-900">
+                                {comment.user?.username || "Unknown"}
+                              </p>
+                              <p className="text-sm text-gray-700 mt-1">
+                                {comment.text}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(comment.createdAt).toLocaleString()}
+                              </p>
                             </div>
-                            <p style={styles.commentText}>{comment.text}</p>
-                            <span style={styles.commentTime}>
-                              {new Date(comment.createdAt).toLocaleString()}
-                            </span>
                           </div>
                         ))
                       ) : (
-                        <p style={styles.noComments}>No comments yet</p>
+                        <p className="text-center text-gray-500 py-4 text-sm">
+                          No comments yet. Be the first to comment!
+                        </p>
                       )}
                     </div>
 
-                    <div style={styles.addComment}>
+                    {/* Add Comment */}
+                    <div className="mt-4 flex space-x-2">
+                      <img
+                        src={user?.profilePic}
+                        alt={user?.username}
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                      />
                       <input
                         type="text"
-                        placeholder="Add a comment..."
+                        placeholder="Write a comment..."
                         value={commentText[post._id] || ""}
                         onChange={(e) =>
                           setCommentText({
                             ...commentText,
-                            [post._id]: e.target.value
+                            [post._id]: e.target.value,
                           })
                         }
                         onKeyPress={(e) => {
@@ -222,11 +277,11 @@ export default function Home() {
                             handleComment(post._id);
                           }
                         }}
-                        style={styles.commentInput}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                       />
                       <button
                         onClick={() => handleComment(post._id)}
-                        style={styles.commentBtn}
+                        className="bg-blue-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-600 transition"
                       >
                         Post
                       </button>
@@ -241,184 +296,3 @@ export default function Home() {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    backgroundColor: "#f0f2f5",
-  },
-  header: {
-    backgroundColor: "#fff",
-    borderBottom: "1px solid #ddd",
-    padding: "1rem",
-    position: "sticky",
-    top: 0,
-    zIndex: 100,
-  },
-  headerContent: {
-    maxWidth: "600px",
-    margin: "0 auto",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  userInfo: {
-    display: "flex",
-    gap: "1rem",
-    alignItems: "center",
-  },
-  createBtn: {
-    backgroundColor: "#1877f2",
-    color: "white",
-    border: "none",
-    padding: "0.5rem 1rem",
-    borderRadius: "6px",
-    cursor: "pointer",
-  },
-  logoutBtn: {
-    backgroundColor: "#e4e6eb",
-    color: "#050505",
-    border: "none",
-    padding: "0.5rem 1rem",
-    borderRadius: "6px",
-    cursor: "pointer",
-  },
-  main: {
-    maxWidth: "600px",
-    margin: "2rem auto",
-    padding: "0 1rem",
-  },
-  noPosts: {
-    backgroundColor: "#fff",
-    padding: "3rem",
-    borderRadius: "8px",
-    textAlign: "center",
-  },
-  postsContainer: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-  },
-  post: {
-    backgroundColor: "#fff",
-    borderRadius: "8px",
-    padding: "1rem",
-    boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-  },
-  postHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "0.5rem",
-  },
-  authorInfo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-  },
-  avatar: {
-    width: "40px",
-    height: "40px",
-    borderRadius: "50%",
-    objectFit: "cover",
-  },
-  timestamp: {
-    fontSize: "0.875rem",
-    color: "#65676b",
-  },
-  postImage: {
-    width: "100%",
-    maxHeight: "500px",
-    objectFit: "cover",
-    borderRadius: "8px",
-    marginBottom: "0.5rem",
-  },
-  caption: {
-    margin: "0.5rem 0",
-    lineHeight: "1.5",
-  },
-  postActions: {
-    display: "flex",
-    gap: "0.5rem",
-    borderTop: "1px solid #e4e6eb",
-    paddingTop: "0.5rem",
-    marginTop: "0.5rem",
-  },
-  actionBtn: {
-    flex: 1,
-    padding: "0.5rem",
-    border: "none",
-    backgroundColor: "transparent",
-    cursor: "pointer",
-    borderRadius: "4px",
-    fontSize: "0.9rem",
-  },
-  liked: {
-    color: "#e41e3f",
-    fontWeight: "bold",
-  },
-  commentsSection: {
-    marginTop: "1rem",
-    borderTop: "1px solid #e4e6eb",
-    paddingTop: "1rem",
-  },
-  commentsList: {
-    maxHeight: "300px",
-    overflowY: "auto",
-    marginBottom: "1rem",
-  },
-  comment: {
-    padding: "0.5rem",
-    backgroundColor: "#f0f2f5",
-    borderRadius: "8px",
-    marginBottom: "0.5rem",
-  },
-  commentHeader: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    marginBottom: "0.25rem",
-  },
-  commentAvatar: {
-    width: "24px",
-    height: "24px",
-    borderRadius: "50%",
-    objectFit: "cover",
-  },
-  commentText: {
-    margin: "0.25rem 0",
-    fontSize: "0.9rem",
-  },
-  commentTime: {
-    fontSize: "0.75rem",
-    color: "#65676b",
-  },
-  noComments: {
-    textAlign: "center",
-    color: "#65676b",
-    fontStyle: "italic",
-  },
-  addComment: {
-    display: "flex",
-    gap: "0.5rem",
-  },
-  commentInput: {
-    flex: 1,
-    padding: "0.5rem",
-    border: "1px solid #ccc",
-    borderRadius: "20px",
-    outline: "none",
-  },
-  commentBtn: {
-    padding: "0.5rem 1rem",
-    backgroundColor: "#1877f2",
-    color: "white",
-    border: "none",
-    borderRadius: "20px",
-    cursor: "pointer",
-  },
-  error: {
-    color: "#e41e3f",
-    marginBottom: "1rem",
-  },
-};

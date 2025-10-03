@@ -1,30 +1,32 @@
-import { createContext,useContext,useState,useEffect, Children } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import api from "../api/axios";
 
+const AuthContext = createContext();
 
-const AuthContext= createContext();
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-export const AuthProvider= ({Children})=>{
-    const [user,setUser]= useState(null)
+  const fetchUser = async () => {
+    try {
+      const res = await api.get("/auth/profile");
+      setUser(res.data.data);
+    } catch (error) {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const fetchUser= async()=>{
-        try {
-            const res= await api.get("/auth/profile");
-            setUser(res.data.data);
-        } catch (error) {
-            setUser(null)
-        };
-        
-    };
-    useEffect(()=>{
-        fetchUser();
-    },[]);
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
-    return(
-        <AuthContext.Provider value={{user,setUser,fetchUser}}>
-            {Children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={{ user, setUser, fetchUser, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-export const useAuth=()=> useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext);

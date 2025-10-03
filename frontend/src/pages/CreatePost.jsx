@@ -15,13 +15,11 @@ export default function CreatePost() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith("image/")) {
         setError("Please select an image file");
         return;
       }
 
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setError("Image size should be less than 5MB");
         return;
@@ -30,7 +28,6 @@ export default function CreatePost() {
       setForm({ ...form, image: file });
       setError(null);
 
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
@@ -41,7 +38,7 @@ export default function CreatePost() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!form.image) {
       setError("Please select an image");
       return;
@@ -78,234 +75,154 @@ export default function CreatePost() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <button onClick={() => navigate("/")} style={styles.backBtn}>
-            ← Back
-          </button>
-          <h2>Create New Post</h2>
-        </div>
-
-        <form onSubmit={handleSubmit} style={styles.form}>
-          {error && <div style={styles.error}>{error}</div>}
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Caption</label>
-            <textarea
-              placeholder="What's on your mind?"
-              value={form.caption}
-              onChange={(e) => setForm({ ...form, caption: e.target.value })}
-              style={styles.textarea}
-              rows="4"
-              maxLength="500"
-            />
-            <small style={styles.charCount}>
-              {form.caption.length}/500 characters
-            </small>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => navigate("/")}
+                className="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </button>
+              <h1 className="text-xl font-bold text-gray-900">Create New Post</h1>
+            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !form.image || !form.caption.trim()}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? "Posting..." : "Post"}
+            </button>
           </div>
+        </div>
+      </header>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Image</label>
-            <div style={styles.uploadArea}>
+      {/* Main Content */}
+      <main className="max-w-2xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Upload Image
+              </label>
               {preview ? (
-                <div style={styles.previewContainer}>
-                  <img src={preview} alt="Preview" style={styles.preview} />
+                <div className="relative rounded-xl overflow-hidden">
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="w-full max-h-96 object-cover"
+                  />
                   <button
                     type="button"
                     onClick={() => {
                       setForm({ ...form, image: null });
                       setPreview(null);
                     }}
-                    style={styles.removeBtn}
+                    className="absolute top-4 right-4 bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition shadow-lg"
+                    disabled={loading}
                   >
-                    ✕ Remove
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </button>
                 </div>
               ) : (
-                <label style={styles.uploadLabel}>
+                <label className="cursor-pointer block">
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    style={styles.fileInput}
+                    className="hidden"
+                    disabled={loading}
                   />
-                  <div style={styles.uploadPlaceholder}>
-                    <span style={styles.uploadIcon}>📷</span>
-                    <p>Click to upload an image</p>
-                    <small>JPG, PNG, GIF up to 5MB</small>
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-blue-400 hover:bg-blue-50 transition">
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-gray-700">
+                          Click to upload an image
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          JPG, PNG, GIF up to 5MB
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </label>
               )}
             </div>
-          </div>
 
-          <div style={styles.actions}>
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              style={styles.cancelBtn}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              style={{
-                ...styles.submitBtn,
-                ...(loading ? styles.submitBtnDisabled : {}),
-              }}
-              disabled={loading}
-            >
-              {loading ? "Posting..." : "Post"}
-            </button>
-          </div>
-        </form>
-      </div>
+            {/* Caption */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Caption
+              </label>
+              <textarea
+                placeholder="What's on your mind?"
+                value={form.caption}
+                onChange={(e) => setForm({ ...form, caption: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition outline-none resize-none"
+                rows="4"
+                maxLength="500"
+                disabled={loading}
+              />
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-xs text-gray-500">
+                  Share your thoughts with the community
+                </p>
+                <p className="text-xs text-gray-500">
+                  {form.caption.length}/500
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading || !form.image || !form.caption.trim()}
+                className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Posting...
+                  </span>
+                ) : (
+                  "Create Post"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    backgroundColor: "#f0f2f5",
-    padding: "2rem",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: "8px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-    width: "100%",
-    maxWidth: "600px",
-    padding: "2rem",
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    gap: "1rem",
-    marginBottom: "2rem",
-  },
-  backBtn: {
-    backgroundColor: "#e4e6eb",
-    border: "none",
-    padding: "0.5rem 1rem",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "0.9rem",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1.5rem",
-  },
-  formGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
-  },
-  label: {
-    fontWeight: "600",
-    fontSize: "0.9rem",
-    color: "#333",
-  },
-  textarea: {
-    padding: "0.75rem",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
-    fontSize: "1rem",
-    fontFamily: "inherit",
-    resize: "vertical",
-    outline: "none",
-  },
-  charCount: {
-    fontSize: "0.8rem",
-    color: "#65676b",
-    textAlign: "right",
-  },
-  uploadArea: {
-    border: "2px dashed #ddd",
-    borderRadius: "8px",
-    minHeight: "200px",
-  },
-  uploadLabel: {
-    display: "block",
-    cursor: "pointer",
-    padding: "2rem",
-    textAlign: "center",
-  },
-  fileInput: {
-    display: "none",
-  },
-  uploadPlaceholder: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "0.5rem",
-    color: "#65676b",
-  },
-  uploadIcon: {
-    fontSize: "3rem",
-  },
-  previewContainer: {
-    position: "relative",
-    padding: "1rem",
-  },
-  preview: {
-    width: "100%",
-    maxHeight: "400px",
-    objectFit: "contain",
-    borderRadius: "8px",
-  },
-  removeBtn: {
-    position: "absolute",
-    top: "1.5rem",
-    right: "1.5rem",
-    backgroundColor: "rgba(0,0,0,0.7)",
-    color: "white",
-    border: "none",
-    padding: "0.5rem 1rem",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "0.9rem",
-  },
-  actions: {
-    display: "flex",
-    gap: "1rem",
-    justifyContent: "flex-end",
-    marginTop: "1rem",
-  },
-  cancelBtn: {
-    padding: "0.75rem 1.5rem",
-    backgroundColor: "#e4e6eb",
-    color: "#050505",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "1rem",
-  },
-  submitBtn: {
-    padding: "0.75rem 1.5rem",
-    backgroundColor: "#1877f2",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "1rem",
-    fontWeight: "600",
-  },
-  submitBtnDisabled: {
-    backgroundColor: "#a0c4ff",
-    cursor: "not-allowed",
-  },
-  error: {
-    backgroundColor: "#fee",
-    color: "#c00",
-    padding: "0.75rem",
-    borderRadius: "6px",
-    fontSize: "0.9rem",
-  },
-};
