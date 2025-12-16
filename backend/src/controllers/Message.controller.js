@@ -77,3 +77,36 @@ export const getMessages = asyncHandler(async (req, res) => {
     new ApiResponse(200, messages, "Messages fetched")
   );
 });
+// NEW: Get total unread message count for the user
+export const getUnreadCount = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const count = await Message.countDocuments({
+    conversation: { $in: await Conversation.find({ participants: userId }).distinct('_id') },
+    sender: { $ne: userId }, // Message is not from me
+    seen: false              // Message is not seen
+  });
+
+  return res.status(200).json(
+    new ApiResponse(200, { count }, "Unread count fetched")
+  );
+});
+
+// NEW: Mark messages in a conversation as read
+export const markMessagesAsRead = asyncHandler(async (req, res) => {
+  const { conversationId } = req.params;
+  const userId = req.user._id;
+
+  await Message.updateMany(
+    {
+      conversation: conversationId,
+      sender: { $ne: userId },
+      seen: false
+    },
+    { $set: { seen: true } }
+  );
+
+  return res.status(200).json(
+    new ApiResponse(200, {}, "Messages marked as read")
+  );
+});

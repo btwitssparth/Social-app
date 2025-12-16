@@ -1,9 +1,12 @@
+// frontend/src/pages/Home.jsx
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useSocket } from "../context/SocketContext";
 
 export default function Home() {
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
@@ -11,6 +14,8 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [commentText, setCommentText] = useState({});
   const [showComments, setShowComments] = useState({});
+
+  const { unreadCount } = useSocket(); 
 
   useEffect(() => {
     if (!user) {
@@ -63,6 +68,27 @@ export default function Home() {
     });
   };
 
+  // --- NEW: Handle starting a chat ---
+  const handleMessageUser = async (targetUserId) => {
+    if (targetUserId === user._id) return; // Don't chat with yourself
+
+    try {
+      // 1. Call the endpoint to get/create conversation ID
+      const res = await api.post("/conversation", {
+        receiverId: targetUserId,
+      });
+      
+      const conversationId = res.data.data._id;
+      
+      // 2. Navigate to the chat page
+      navigate(`/chat/${conversationId}`);
+    } catch (err) {
+      console.error("Failed to start conversation:", err);
+      // Optional: Add a toast notification here
+    }
+  };
+  // ------------------------------------
+
   const handleLogout = async () => {
     try {
       await api.post("/auth/logout");
@@ -86,30 +112,53 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      
-<header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-  <div className="max-w-4xl mx-auto px-4 py-4">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-          <span className="text-xl">🚀</span>
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-xl">🚀</span>
+              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                SocialApp
+              </h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
+                <img
+                  src={user?.profilePic}
+                  alt={user?.username}
+                  className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
+                />
+                <span className="font-medium">{user?.username}</span>
+              </div>
+              
+              <button
+                onClick={() => navigate("/messages")}
+                className="relative text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition"
+                title="Messages"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={() => navigate("/create-post")}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition shadow-md hover:shadow-lg"
+              >
+                + Create
+              </button>
+              <button
+                onClick={handleLogout}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          SocialApp
-        </h1>
-      </div>
-      
-      <div className="flex items-center space-x-4">
-        <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
-          <img
-            src={user?.profilePic}
-            alt={user?.username}
-            className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
-          />
-          <span className="font-medium">{user?.username}</span>
-        </div>
-        
-        {/* Messages Button */}
         <button
           onClick={() => navigate("/messages")}
           className="relative text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded-lg transition"
@@ -118,24 +167,15 @@ export default function Home() {
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
+          
+          {/* Badge */}
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white transform translate-x-1 -translate-y-1">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </button>
-        
-        <button
-          onClick={() => navigate("/create-post")}
-          className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition shadow-md hover:shadow-lg"
-        >
-          + Create
-        </button>
-        <button
-          onClick={handleLogout}
-          className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
-        >
-          Logout
-        </button>
-      </div>
-    </div>
-  </div>
-</header>
+      </header>
 
       {/* Main Content */}
       <main className="max-w-2xl mx-auto px-4 py-8">
@@ -175,9 +215,23 @@ export default function Home() {
                       className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
                     />
                     <div>
-                      <p className="font-semibold text-gray-900">
-                        {post.user?.username || "Unknown User"}
-                      </p>
+                      <div className="flex items-center space-x-2">
+                        <p className="font-semibold text-gray-900">
+                          {post.user?.username || "Unknown User"}
+                        </p>
+                        {/* Message Button (Only if not your own post) */}
+                        {user && post.user && user._id !== post.user._id && (
+                          <button
+                            onClick={() => handleMessageUser(post.user._id)}
+                            className="text-blue-500 hover:bg-blue-50 p-1.5 rounded-full transition"
+                            title={`Message ${post.user.username}`}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500">
                         {new Date(post.createdAt).toLocaleDateString("en-US", {
                           month: "short",

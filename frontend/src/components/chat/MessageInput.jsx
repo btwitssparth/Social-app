@@ -1,33 +1,31 @@
+// frontend/src/components/chat/MessageInput.jsx
 import { useState } from "react";
 import api from "../../api/axios";
-import { useSocket } from "../../context/SocketContext";
 
 export default function MessageInput({
-  conversationId,
+  conversationId, // Kept for reference, but API uses receiverId
+  receiverId,     // <--- ADDED: Required by backend
   onMessageSent,
 }) {
   const [text, setText] = useState("");
-  const socket = useSocket();
 
   const sendMessage = async () => {
     if (!text.trim()) return;
 
-    const res = await api.post("/message/send", {
-      conversationId,
-      text,
-    });
+    try {
+      const res = await api.post("/message/send", {
+        receiverId, // <--- FIXED: Now sending receiverId
+        text,
+      });
 
-    const savedMessage = res.data.data;
-
-    onMessageSent(savedMessage);
-
-    socket.emit("sendMessage", {
-      chatId: conversationId,
-      text: savedMessage.text,
-      to: savedMessage.receiver,
-    });
-
-    setText("");
+      const savedMessage = res.data.data;
+      onMessageSent(savedMessage);
+      setText("");
+      
+      // Removed socket.emit() to prevent duplicates
+    } catch (error) {
+      console.error("Failed to send message", error);
+    }
   };
 
   return (
@@ -36,6 +34,7 @@ export default function MessageInput({
         className="flex-1 border rounded px-3 py-2"
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onKeyPress={(e) => e.key === "Enter" && sendMessage()}
         placeholder="Type a message..."
       />
       <button

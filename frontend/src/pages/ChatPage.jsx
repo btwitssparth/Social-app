@@ -1,5 +1,5 @@
 // frontend/src/pages/ChatPage.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { useSocket } from "../context/SocketContext";
@@ -10,11 +10,24 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const socket = useSocket();
   const { user } = useAuth();
+  
+  // Ref for scrolling to bottom
+  const messagesEndRef = useRef(null);
 
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [otherUser, setOtherUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
 
   // Fetch conversation details and messages
   useEffect(() => {
@@ -45,7 +58,9 @@ export default function ChatPage() {
       }
     };
 
-    fetchData();
+    if (user && conversationId) {
+      fetchData();
+    }
   }, [conversationId, user]);
 
   // Join room and listen for messages
@@ -55,8 +70,11 @@ export default function ChatPage() {
     socket.emit("joinRoom", conversationId);
 
     const handleNewMessage = (msg) => {
-      console.log("New message received:", msg);
-      setMessages((prev) => [...prev, msg]);
+      // Prevent duplicates: Check if message already exists
+      setMessages((prev) => {
+        if (prev.some(m => m._id === msg._id)) return prev;
+        return [...prev, msg];
+      });
     };
 
     socket.on("newMessage", handleNewMessage);
@@ -68,9 +86,10 @@ export default function ChatPage() {
   }, [socket, conversationId]);
 
   const sendMessage = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || !otherUser) return;
 
     try {
+      // 1. Send to Backend
       const res = await api.post("/message/send", {
         receiverId: otherUser._id,
         text: text.trim(),
@@ -78,17 +97,11 @@ export default function ChatPage() {
 
       const savedMessage = res.data.data;
       
-      // Add message locally
+      // 2. Add message locally immediately for UI responsiveness
       setMessages((prev) => [...prev, savedMessage]);
 
-      // Emit via socket
-      if (socket) {
-        socket.emit("sendMessage", {
-          chatId: conversationId,
-          text: savedMessage.text,
-          to: otherUser._id,
-        });
-      }
+      // Note: We REMOVED the redundant socket.emit("sendMessage") here.
+      // The backend controller now emits the event to the room upon saving.
 
       setText("");
     } catch (err) {
@@ -106,6 +119,28 @@ export default function ChatPage() {
       </div>
     );
   }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // ... (fetch conversation and otherUser) ...
+
+        // NEW: Mark messages as read
+        await api.post(`/message/read/${conversationId}`);
+        
+        // NEW: Update global unread count (re-fetch to be accurate)
+        const countRes = await api.get("/message/unread");
+        setUnreadCount(countRes.data.data.count);
+
+        // ... (fetch messages) ...
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [conversationId, setUnreadCount]); // Add setUnreadCount to dependencies
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
@@ -178,6 +213,7 @@ export default function ChatPage() {
             );
           })
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}

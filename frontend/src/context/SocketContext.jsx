@@ -1,66 +1,69 @@
 // frontend/src/context/SocketContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import io from "socket.io-client";
 import { useAuth } from "./AuthContext";
+import api from "../api/axios"; // Import api to fetch initial count
 
 const SocketContext = createContext();
 
+export const useSocket = () => {
+  return useContext(SocketContext);
+};
+
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0); // <--- New State
   const { user } = useAuth();
 
+  // 1. Initialize Socket
   useEffect(() => {
-    if (!user) {
-      if (socket) {
-        socket.disconnect();
-        setSocket(null);
-      }
-      return;
+    if (user) {
+      const newSocket = io("http://localhost:5000", {
+        auth: {
+          token: localStorage.getItem("accessToken"),
+        },
+      });
+      setSocket(newSocket);
+
+      return () => newSocket.close();
     }
-
-    // Get access token from cookies
-    const getTokenFromCookies = () => {
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'accessToken') {
-          return value;
-        }
-      }
-      return null;
-    };
-
-    const token = getTokenFromCookies();
-
-    const newSocket = io("http://localhost:5000", {
-      auth: { token },
-      withCredentials: true,
-    });
-
-    newSocket.on("connect", () => {
-      console.log("✅ Socket connected:", newSocket.id);
-    });
-
-    newSocket.on("connect_error", (err) => {
-      console.error("❌ Socket connection error:", err.message);
-    });
-
-    newSocket.on("disconnect", () => {
-      console.log("Socket disconnected");
-    });
-
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.disconnect();
-    };
   }, [user]);
 
+  // 2. Fetch Initial Unread Count & Listen for Real-time Updates
+  useEffect(() => {
+    if (user) {
+      // Fetch initial count
+      const fetchUnread = async () => {
+        try {
+          const res = await api.get("/message/unread");
+          setUnreadCount(res.data.data.count);
+        } catch (err) {
+          console.error("Failed to fetch unread count", err);
+        }
+      };
+      fetchUnread();
+    }
+
+    if (socket) {
+      // Listen for incoming messages
+      const handleNewMessage = (msg) => {
+        // Only increment if the message is NOT from me
+        if (msg.sender !== user._id) {
+          setUnreadCount((prev) => prev + 1);
+        }
+      };
+
+      socket.on("newMessage", handleNewMessage);
+
+      return () => {
+        socket.off("newMessage", handleNewMessage);
+      };
+    }
+  }, [socket, user]);
+
   return (
-    <SocketContext.Provider value={socket}>
+    <SocketContext.Provider value={{ socket, unreadCount, setUnreadCount }}>
       {children}
     </SocketContext.Provider>
   );
 };
-
-export const useSocket = () => useContext(SocketContext);
