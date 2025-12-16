@@ -1,9 +1,13 @@
+// frontend/src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { SocketProvider } from "./context/SocketContext";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import CreatePost from "./pages/CreatePost";
+import MessagesPage from "./pages/MessagePage";
+import ChatPage from "./pages/ChatPage";
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -69,6 +73,22 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/messages"
+        element={
+          <ProtectedRoute>
+            <MessagesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chat/:conversationId"
+        element={
+          <ProtectedRoute>
+            <ChatPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/register"
         element={
           <PublicRoute>
@@ -92,9 +112,11 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <SocketProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </SocketProvider>
     </AuthProvider>
   );
 }
