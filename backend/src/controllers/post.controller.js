@@ -47,26 +47,33 @@ const getAllPosts= asyncHandler(async(req,res)=>{
 
 // Like/unlike a post
 
-const toggleLikePost= asyncHandler(async(req,res)=>{
-    const post = await Post.findById(req.params.id);
-    if(!post){
-        throw new ApiError(404,"Post not found")
+const toggleLikePost = asyncHandler(async (req, res) => {
+  const postId = req.params.id;
+  const userId = req.user._id;
 
-    }
-    const userId= req.user._id;
-    if(post.likes.includes(userId)){
-        post.likes.pull(userId)//unlike
-    }
-    else{
-        post.likes.push(userId)//like
-    }
+  let post = await Post.findById(postId);
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
 
-    await post.save();
+  if (post.likes.includes(userId)) {
+    post.likes.pull(userId); // unlike
+  } else {
+    post.likes.push(userId); // like
+  }
 
-    return res.status(200).json(
-        new ApiResponse(200,post,"Post like toggled successfully")
-    )
-})
+  await post.save();
+
+  // 🔥 CRITICAL FIX: re-fetch populated post
+  post = await Post.findById(postId)
+    .populate("user", "username profilePic")
+    .populate("comments.user", "username profilePic");
+
+  return res.status(200).json(
+    new ApiResponse(200, post, "Post like toggled successfully")
+  );
+});
+
 
 // Add comment to a post
 

@@ -1,21 +1,32 @@
-import { ApiError } from "../utils/apiError.js";
 import jwt from "jsonwebtoken";
 import User from "../models/User.model.js";
+import { ApiError } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asynchandler.js";
 
+/**
+ * @desc   Verify JWT from HTTP-only cookies
+ * @usage  Protected routes middleware
+ */
 export const verifyJwt = asyncHandler(async (req, res, next) => {
+  // 🔍 Debug (keep for now, remove later)
+  // console.log("Incoming cookies:", req.cookies);
+
   try {
-    const token =
-      req.cookies?.accessToken ||
-      req.header("Authorization")?.replace("Bearer ", "");
-    
+    // ✅ Read token ONLY from cookies (primary)
+    const token = req.cookies?.accessToken;
+
     if (!token) {
       throw new ApiError(401, "Unauthorized request");
     }
 
-    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    // ✅ Verify token
+    const decodedToken = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET
+    );
 
-    const user = await User.findById(decodedToken?._id).select(
+    // ✅ Fetch user & attach to request
+    const user = await User.findById(decodedToken._id).select(
       "-password -refreshToken"
     );
 
@@ -26,6 +37,9 @@ export const verifyJwt = asyncHandler(async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    throw new ApiError(401, error?.message || "Invalid access token");
+    throw new ApiError(
+      401,
+      error?.message || "Invalid or expired access token"
+    );
   }
 });
